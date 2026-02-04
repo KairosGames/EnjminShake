@@ -21,15 +21,20 @@ public:
 	};
 
 	Player& player;
+	sf::Sprite alertSprite;
 	ActionState currentState;
 	sf::Vector2f startPos;
 	sf::Vector2f lookDownOffset;
 	sf::Vector2f lookDownPos;
-	float viewDistance = 600.0f;
-	float patrolDistance = 800.0f;
+	float viewDistance = 800.0f;
+	float patrolDistance = 600.0f;
 	float patrolSpeed;
 	bool hasSeenPlayer = false;
 	bool isGoingRight;
+
+	double memoryTimer = 0.0;
+	double memoryTime = 2.0;
+	int lastMemDir;
 
 	AnimatedSprite<WeaponAnimType> weapon;
 	sf::Vector2f weapPos;
@@ -38,13 +43,14 @@ public:
 	sf::Vector2f weapOffset;
 	sf::Vector2f targetPos;
 	sf::Texture bulletTex;
-	double reloadTime = 1.0f;
+	double reloadTime = 0.5f;
 	double reloadTimer = 0.0f;
 	float aimedAngle = 0.0f;
 	float aimRotCont = 0.0f;
 	bool aimRotInit;
 	int lastAimSense;
 	bool canShoot = false;
+	bool hasJustJump = false;
 
 	Enemy(sf::Vector2f pPos, WallMap& pWallMap, Player& pPlayer, const std::string& spritePath, sf::Vector2i frameSize);
 	void update(double dt) override;
@@ -54,10 +60,12 @@ public:
 	void doAction(double dt);
 	void updateSense();
 	void setForEditorInstance();
+	void updateAlertPos();
 
 	void updateWeapon(double dt);
 	void updateWeaponPosition(double dt);
 	void updateWeaponSense(double dt);
+	void updateLookDownPos();
 	void aim(double dt);
 	void updateWeaponAnimations(double dt);
 	void shoot(double dt);
@@ -69,5 +77,8 @@ public:
 	bool isThereGround();
 	bool canGoForward();
 	bool canSeePlayer();
+	void handleChase(double dt);
+	void handleJump(double dt);
+	bool canJump();
 };
 

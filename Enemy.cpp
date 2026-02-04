@@ -8,9 +8,9 @@ Enemy::Enemy(sf::Vector2f pPos, WallMap& pWallMap, Player& pPlayer, const std::s
 {
 	isPlayer = false;
 	isGoingRight = randBool();
-	dxMax = 300.0f;
+	dxMax = 400.0f;
 	dxRMax = 200.0f;
-	patrolSpeed = 150.0f;
+	patrolSpeed = 175.0f;
 	brX = 2.0f;
 	scale = { 2.0f, 2.0f };
 	animSprite.sprite.setScale(scale);
@@ -26,7 +26,8 @@ Enemy::Enemy(sf::Vector2f pPos, WallMap& pWallMap, Player& pPlayer, const std::s
 	loadAnimations();
 	lookDownOffset = { (vBox.width / 2.0f) + 20.0f, (vBox.height / 2.0f) + 10.0f };
 	lookDownPos = pos + lookDownOffset;
-
+	alertSprite.setTexture(EffectsManager::Instance().alertTex);
+	alertSprite.setOrigin({10, 10});
 	bulletTex.loadFromFile("res/sprites/bullet.png");
 	weapOffset = { 0.0f, 12.0f };
 	weapScale = { 1.2f, 1.2f };
@@ -42,15 +43,21 @@ Enemy::Enemy(sf::Vector2f pPos, WallMap& pWallMap, Player& pPlayer, const std::s
 
 void Enemy::update(double dt) {
 	updateState();
-	doAction(dt);
 	updateSense();
+	updateLookDownPos();
+	doAction(dt);
+	updateAlertPos();
 	if (!isDead) updateWeapon(dt);
 	Entity::update(dt);
 }
 
 void Enemy::draw(sf::RenderWindow& win) {
 	Entity::draw(win);
-	if (!isDead) weapon.draw(&win);
+	if (!isDead) {
+		weapon.draw(&win);
+		if (currentState == Attack || currentState == Chase)
+			win.draw(alertSprite);
+	}
 }
 
 void Enemy::setForEditorInstance() {
@@ -70,6 +77,15 @@ void Enemy::loadAnimations() {
 
 	weapon.addAnim(Wait, std::vector<unsigned int>{ 0, 1, 2, 3, 4 }, 0.5, true);
 	weapon.addAnim(Shoot, std::vector<unsigned int>{ 5, 6, 7, 8, 9, 10, 11, 12 }, 0.05, false);
+}
+
+void Enemy::updateAlertPos() {
+	alertSprite.setPosition({pos.x, pos.y - 60.0f});
+}
+
+void Enemy::updateLookDownPos() {
+	float dir = (currentState == Patrol) ? ((isGoingRight) ? 1.0f : -1.0f) : ((getSense() > 0) ? 1.0f : -1.0f);
+	lookDownPos = { pos.x + (lookDownOffset.x * dir), pos.y + lookDownOffset.y };
 }
 
 void Enemy::updateState() {
@@ -101,15 +117,7 @@ void Enemy::doAction(double dt) {
 		patrol(dt);
 	}
 	else if (currentState == Chase) {
-		if (!isGrounded) return;
-		if (!canSeePlayer()){
-			hasSeenPlayer = false;
-			return;
-		}
-		if (player.pos.x > pos.x)
-			moveX(dt, true, dxMax);
-		else
-			moveX(dt, false, dxMax);
+		handleChase(dt);
 	}
 	else if (currentState == Attack) {
 		stopMoveX(dt);
@@ -118,6 +126,41 @@ void Enemy::doAction(double dt) {
 	else if (currentState == Dead) {
 		stopMoveX(dt);
 	}
+
+	if (hasJustJump)
+		handleJump(dt);
+}
+
+void Enemy::handleChase(double dt) {
+	if (!isGrounded && dy > 0) return;
+
+	if (!canSeePlayer()) {
+		memoryTimer += dt;
+		if (memoryTimer >= memoryTime) {
+			memoryTimer = 0.0;
+			hasSeenPlayer = false;
+			return;
+		}
+		bool isRight = lastMemDir > 0 ? true : false;
+		moveX(dt, isRight, dxMax);
+		if (!canGoForward() && isGrounded && canJump()) {
+			jump();
+			hasJustJump = true;
+		}
+	}
+	else {
+		bool isRight = player.pos.x > pos.x;
+		moveX(dt, isRight, dxMax);
+	}
+}
+
+void Enemy::handleJump(double dt) {
+	if (isGrounded) {
+		hasJustJump = false;
+		return;
+	}
+	bool isRight = (getSense() > 0) ? true : false;
+	moveX(dt, isRight, dxMax);
 }
 
 void Enemy::updateSense() {
@@ -227,20 +270,17 @@ sf::Vector2f Enemy::getFirePos() {
 	return firePos;
 }
 
-void Enemy::playShootEffect(sf::Vector2f firePos) {
-	EffectsManager::Instance().playAnimEffect(EffectsManager::AnimEffectType::FireMuzzle, firePos, aimedAngle, { 4.0f, 4.0f });
-}
+	void Enemy::playShootEffect(sf::Vector2f firePos) {
+		EffectsManager::Instance().playAnimEffect(EffectsManager::AnimEffectType::FireMuzzle, firePos, aimedAngle, { 4.0f, 4.0f });
+	}
 
-void Enemy::generateBullet(sf::Vector2f firePos) {
+	void Enemy::generateBullet(sf::Vector2f firePos) {
 	Bullet newBullet(bulletTex, firePos, aimedAngle);
 	wallMap.bullets.push_back(newBullet);
 }
 
 void Enemy::patrol(double dt) {
 	if (!isGrounded) return;
-
-	float dir = (isGoingRight) ? 1.0f : -1.0f;
-	lookDownPos = { pos.x + (lookDownOffset.x * dir), pos.y + lookDownOffset.y };
 
 	if (!isThereGround() || !canGoForward()) {
 		isGoingRight = !isGoingRight;
@@ -260,8 +300,15 @@ bool Enemy::isThereGround() {
 }
 
 bool Enemy::canGoForward() {
-	int px = (int)(lookDownPos.x / C::GRID_SIZE);
+	float dir = (getSense() > 0) ? 40.0f : -40.0f;
+	int px = (int)((lookDownPos.x + dir) / C::GRID_SIZE);
 	int py = (int)((pos.y) / C::GRID_SIZE);
+	return !wallMap.isWall(px, py);
+}
+
+bool Enemy::canJump() {
+	int px = (int)(lookDownPos.x / C::GRID_SIZE);
+	int py = (int)((pos.y - C::GRID_SIZE) / C::GRID_SIZE);
 	return !wallMap.isWall(px, py);
 }
 
@@ -306,5 +353,8 @@ bool Enemy::canSeePlayer() {
 			err += dx;
 		}
 	}
+
+	memoryTimer = 0.0;
+	lastMemDir = getSense();
 	return true;
 }

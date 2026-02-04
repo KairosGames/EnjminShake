@@ -40,7 +40,7 @@ void Player::draw(sf::RenderWindow& win) {
 
 void Player::getInputs(double dt) {
 
-	if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+	if ((!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) || isDead)
 		stopMoveX(dt);
 
 	if (isDead) return;

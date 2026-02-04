@@ -266,7 +266,7 @@ void WallMap::addAllBoxes() {
 }
 
 void WallMap::loadEnnemies() {
-	addEnemy({ 325.0f, 665.0f });
+	addEnemy({325.0f, 665.0f});
 	addEnemy({920.0f, 730.0f});
 	addEnemy({ 920.0f, 990.0f });
 	addEnemy({ 1200.0f, 350.0f });

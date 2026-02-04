@@ -162,7 +162,7 @@ void Entity::checkGround(double dy0) {
 
 void Entity::jump() {
 	if (!isGrounded) return;
-	dy = -1000.0f;
+	dy = (isPlayer) ? -1000.0f : -700.0f;
 	isGrounded = false;
 	justJump = true;
 }

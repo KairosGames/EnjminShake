@@ -44,6 +44,8 @@ void EffectsManager::loadTextures() {
 	textures[AnimEffectType::FireMuzzle].loadFromFile("res/sprites/fire_muzzle.png");
 	textures[AnimEffectType::Explosion].loadFromFile("res/sprites/hit.png");
 	textures[AnimEffectType::BoxExplosion].loadFromFile("res/sprites/box_explosion.png");
+
+	alertTex.loadFromFile("res/sprites/alert.png");
 }
 
 void EffectsManager::loadAnimations() {

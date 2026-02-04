@@ -47,6 +47,8 @@ public:
 	std::map<AnimEffectType, sf::Texture> textures;
 	std::map<AnimEffectType, std::vector<AnimEffect>> animEffects;
     std::vector<PlayingEffect> animEffToPlay;
+    
+    sf::Texture alertTex;
 
 	EffectsManager();
     static EffectsManager& Instance() {
