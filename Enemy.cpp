@@ -319,7 +319,7 @@ bool Enemy::canSeePlayer() {
 	int endY = int(player.pos.y / C::GRID_SIZE);
 	int x0 = startX;
 	int y0 = startY;
-	int x1 = endX;;
+	int x1 = endX;
 	int y1 = endY;
 
 	bool steep = std::abs(y1 - y0) > std::abs(x1 - x0);
@@ -355,6 +355,6 @@ bool Enemy::canSeePlayer() {
 	}
 
 	memoryTimer = 0.0;
-	lastMemDir = getSense();
+	lastMemDir = (pos.x - player.pos.x < 0) ? 1 : -1 ;
 	return true;
 }
