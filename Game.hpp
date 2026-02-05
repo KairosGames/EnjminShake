@@ -30,6 +30,7 @@ public:
 		Angle1,
 		Angle2,
 		Ground,
+		Dirt,
 		Enemy,
 		Player
 	};

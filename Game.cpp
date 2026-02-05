@@ -80,6 +80,11 @@ void Game::im() {
 		editorSprite.setTexture(editTextures[editMode]);
 	}
 
+	if (ImGui::Button("Dirt")) {
+		editMode = EditMode::Dirt;
+		editorSprite.setTexture(editTextures[editMode]);
+	}
+
 	if (ImGui::Button("Enemy")) {
 		editMode = EditMode::Enemy;
 		editorSprite.setTexture(editTextures[editMode]);
@@ -101,6 +106,7 @@ void Game::loadEditTextures() {
 	editTextures[EditMode::Angle1].loadFromFile("res/sprites/angle1.png");
 	editTextures[EditMode::Angle2].loadFromFile("res/sprites/angle2.png");
 	editTextures[EditMode::Ground].loadFromFile("res/sprites/ground.png");
+	editTextures[EditMode::Dirt].loadFromFile("res/sprites/dirt.png");
 	editTextures[EditMode::Enemy].loadFromFile("res/sprites/edenemy.png");
 	editTextures[EditMode::Player].loadFromFile("res/sprites/edplayer.png");
 }
@@ -114,6 +120,7 @@ void Game::handleEditorUpdate() {
 		|| editMode == EditMode::Edge2
 		|| editMode == EditMode::Angle1
 		|| editMode == EditMode::Angle2
+		|| editMode == EditMode::Dirt
 		|| editMode == EditMode::Ground)
 	{
 		float cx = ((int)(mousePosWorld.x / C::GRID_SIZE));
@@ -222,6 +229,8 @@ void Game::handleActionFromEditor() {
 		wallMap.addWall(WallMap::WallType::Angle2, cx, cy);
 	else if (editMode == EditMode::Ground)
 		wallMap.addWall(WallMap::WallType::Ground, cx, cy);
+	else if (editMode == EditMode::Dirt)
+		wallMap.addWall(WallMap::WallType::Dirt, cx, cy);
 	else if (editMode == EditMode::Player)
 		player.setForEditorInstance(mousePosWorld);
 	else if (editMode == EditMode::Enemy)
